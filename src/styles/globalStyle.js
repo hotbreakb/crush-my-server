@@ -7,16 +7,31 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
   }
 
+  html {
+    font-size: 16px;
+  }
+
   body {
     font-family: 'Arial', sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    color: #333;
+    background-color: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.text};
   }
 
   a {
     text-decoration: none;
     color: inherit;
+  }
+
+  input {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    html {
+      font-size: 14px;
+    }
   }
 `;
 

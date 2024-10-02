@@ -1,26 +1,19 @@
 const theme = {
   colors: {
-    primary: "#007bff",
-    secondary: "#6c757d",
-    success: "#28a745",
-    danger: "#dc3545",
-    warning: "#ffc107",
-    info: "#17a2b8",
-    light: "#f8f9fa",
-    dark: "#343a40",
-  },
-  fonts: {
-    main: "Arial, sans-serif",
+    background: "#1F1F1F",
+    primary: "#303030",
+    secondary: "#464646",
+    text: "#FFFFFF",
+    header: "#C2C2C2",
+    error: "#FF5151",
   },
   fontSizes: {
-    small: "0.8rem",
-    medium: "1rem",
-    large: "1.2rem",
+    small: "1rem",
+    medium: "1.5rem",
+    large: "2.5rem",
   },
-  spacing: {
-    small: "0.5rem",
-    medium: "1rem",
-    large: "1.5rem",
+  breakpoints: {
+    mobile: "768px",
   },
 };
 
