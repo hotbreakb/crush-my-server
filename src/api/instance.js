@@ -1,10 +1,10 @@
-import axios from "axios";
+import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: "http://crash-my-server.site/api/v1",
+  baseURL: 'http://crash-my-server.site/api/v1',
   timeout: 5000,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 

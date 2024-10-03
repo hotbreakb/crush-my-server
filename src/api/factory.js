@@ -1,14 +1,12 @@
-import axiosInstance from "./instance";
+import axiosInstance from './instance';
 
 const signUp = async (data) => {
-  const response = await axiosInstance.post("/auth/sign-up", data);
+  const response = await axiosInstance.post('/auth/sign-up', data);
   return response.data;
 };
 
 const reissueToken = async (memberId) => {
-  const response = await axiosInstance.post(
-    `/auth/reissue?memberId=${memberId}`
-  );
+  const response = await axiosInstance.post(`/auth/reissue?memberId=${memberId}`);
   return response.data;
 };
 
@@ -44,7 +42,7 @@ const getChatMessages = async ({ senderId, chatRoomId }) => {
 };
 
 const receiveStompMessage = async (data) => {
-  const response = await axiosInstance.post("/group-chat/STOMP", data);
+  const response = await axiosInstance.post('/group-chat/STOMP', data);
   return response.data;
 };
 
@@ -62,7 +60,7 @@ export const queryKeys = {
       mutationFn: clickRequest,
     },
     result: (memberId) => ({
-      queryKey: ["clickResult", memberId],
+      queryKey: ['clickResult', memberId],
       queryFn: () => getClickResult(memberId),
     }),
   },
@@ -74,7 +72,7 @@ export const queryKeys = {
       mutationFn: leaveChatRoom,
     },
     messages: ({ senderId, chatRoomId }) => ({
-      queryKey: ["chatMessages", senderId, chatRoomId],
+      queryKey: ['chatMessages', senderId, chatRoomId],
       queryFn: () => getChatMessages({ senderId, chatRoomId }),
     }),
     stomp: {

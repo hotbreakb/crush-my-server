@@ -1,14 +1,8 @@
-import React from "react";
-import {
-  Outlet,
-  Link,
-  createRouter,
-  createRoute,
-  createRootRoute,
-} from "@tanstack/react-router";
+import React from 'react';
+import { Outlet, Link, createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
 // import { TanStackRouterDevtools } from '@tanstack/router-devtools';
-import HomePage from "../pages/Home.page";
-import LoginPage from "../pages/Login.page";
+import HomePage from '../pages/Home.page';
+import LoginPage from '../pages/Login.page';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -16,7 +10,7 @@ const rootRoute = createRootRoute({
       <div>
         <Link to="/login" className="[&.active]:font-bold">
           Login
-        </Link>{" "}
+        </Link>{' '}
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>
@@ -30,13 +24,13 @@ const rootRoute = createRootRoute({
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: '/',
   component: HomePage,
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/login",
+  path: '/login',
   component: LoginPage,
 });
 
