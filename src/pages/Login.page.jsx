@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styled, { keyframes, css } from "styled-components";
+import styled from "styled-components";
 import { useSignUp, useReissueToken } from "../hooks";
 
 const LoginPage = () => {
@@ -13,7 +13,7 @@ const LoginPage = () => {
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken);
 
-    navigate("/main");
+    navigate("/");
   };
 
   const {
@@ -89,14 +89,6 @@ const LoginPage = () => {
 
 export default LoginPage;
 
-const shakeAnimation = keyframes`
-  0% { transform: translateX(0); }
-  25% { transform: translateX(5px); }
-  50% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-  100% { transform: translateX(0); }
-`;
-
 const S = {
   Wrapper: styled.div`
     min-height: 100vh;
@@ -117,6 +109,7 @@ const S = {
   `,
   Title: styled.h1`
     font-size: ${({ theme }) => theme.fontSizes.large};
+    text-shadow: 4px 4px #1e3445;
     display: flex;
     gap: 3.375rem;
 
@@ -165,13 +158,6 @@ const S = {
     border: 2px solid transparent;
     padding: 0 1rem;
     transition: border-color 0.3s;
-
-    ${(props) =>
-      props.isEmpty &&
-      css`
-        border-color: ${({ theme }) => theme.colors.error};
-        animation: ${shakeAnimation} 0.5s;
-      `}
 
     @media (min-width: ${({ theme }) => theme.breakpoints.mobile}) {
       width: 19.5rem;
