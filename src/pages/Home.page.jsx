@@ -9,9 +9,11 @@ const RankingItem = React.memo(({ info, index }) => (
     <S.Index color={index < NUM_OF_TOP_RANKING ? RANK_COLORS[index] : undefined}>
       {index + 1}
     </S.Index>
-    <span>
-      {info.nickname} : {info.count}
-    </span>
+    {info.nickname && (
+      <span>
+        {info.nickname} : {info.count}
+      </span>
+    )}
   </S.Chip>
 ));
 
@@ -46,10 +48,12 @@ const HomePage = () => {
     { nickname: '팬더', count: 0 },
     { nickname: '원숭이', count: 0 },
     { nickname: '캥거루', count: 0 },
-    { nickname: '코알라', count: 0 },
-    { nickname: '펭귄', count: 0 },
-    { nickname: '북극곰', count: 0 },
   ];
+
+  const displayRankingData = Array.from(
+    { length: 10 },
+    (_, index) => rankingData[index] || { nickname: '' }
+  );
 
   const chatMessages = [
     { type: 'enter', content: '호랑이님이 입장하셨습니다' },
@@ -92,7 +96,7 @@ const HomePage = () => {
             <S.Image src="/path-to-your-image.jpg" alt="Descriptive text" />
           </S.ButtonWrapper>
           <S.Ranking>
-            {rankingData.map((info, index) => (
+            {displayRankingData.map((info, index) => (
               <RankingItem key={info.nickname} info={info} index={index} />
             ))}
           </S.Ranking>
@@ -157,7 +161,6 @@ export const S = {
     gap: ${({ theme }) => theme.spacing.medium};
   `,
   Count: styled.span`
-    font-size: ${({ theme }) => theme.fontSizes.medium};
     color: ${({ theme }) => theme.colors.text};
   `,
   Image: styled.img`
@@ -172,7 +175,8 @@ export const S = {
     gap: ${({ theme }) => theme.spacing.small};
   `,
   Chip: styled.div`
-    ${flexCenter}
+    display: flex;
+    align-items: center;
     background: ${({ theme }) => theme.colors.primary};
     border-radius: 6px;
     color: ${({ theme }) => theme.colors.text};
