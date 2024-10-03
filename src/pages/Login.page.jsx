@@ -54,9 +54,8 @@ const LoginPage = () => {
 
   return (
     <S.Wrapper>
-      <S.Header />
       <S.Content>
-        <S.Title>Crush My Server</S.Title>
+        <S.Title>crush my server</S.Title>
         <S.LoginForm onSubmit={handleSignUp}>
           <S.InputSection>
             <S.InputLabel htmlFor="nickname">nickname</S.InputLabel>
@@ -95,10 +94,6 @@ const S = {
     display: flex;
     flex-direction: column;
   `,
-  Header: styled.header`
-    height: 5.5rem;
-    background: ${({ theme }) => theme.colors.header};
-  `,
   Content: styled.div`
     flex: 1;
     display: flex;
@@ -110,6 +105,7 @@ const S = {
   Title: styled.h1`
     font-size: ${({ theme }) => theme.fontSizes.large};
     text-shadow: 4px 4px #1e3445;
+    text-transform: capitalize;
     display: flex;
     gap: 3.375rem;
 
