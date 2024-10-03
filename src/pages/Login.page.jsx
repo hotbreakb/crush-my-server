@@ -1,27 +1,101 @@
-import React from "react";
-import styled from "styled-components";
+import React, { useState, useEffect } from "react";
+import styled, { keyframes, css } from "styled-components";
+import { useSignUp, useReissueToken } from "../hooks";
 
-const LoginPage = () => (
-  <S.Wrapper>
-    <S.Header />
-    <S.Content>
-      <S.Title>Crush My Server</S.Title>
-      <S.LoginForm>
-        <S.InputSection>
-          <S.InputLabel>nickname</S.InputLabel>
-          <S.Input />
-        </S.InputSection>
-        <S.InputSection>
-          <S.InputLabel>password</S.InputLabel>
-          <S.Input type="password" />
-        </S.InputSection>
-      </S.LoginForm>
-      <S.ErrorMessage>TEST</S.ErrorMessage>
-    </S.Content>
-  </S.Wrapper>
-);
+const LoginPage = () => {
+  const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
+
+  // TODO: reissueToken
+  const reissueTokenMutation = useReissueToken();
+
+  const handleSignUpSuccess = (data) => {
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("refreshToken", data.refreshToken);
+
+    navigate("/main");
+  };
+
+  const {
+    mutate: signUp,
+    isLoading: signUpLoading,
+    errorMessage,
+  } = useSignUp({
+    onSuccess: handleSignUpSuccess,
+  });
+
+  const handleSignUp = (e) => {
+    e.preventDefault();
+
+    if (!nickname || !password) return;
+    signUp({ nickname, password });
+  };
+
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
+  };
+
+  //   useEffect(() => {
+  //     const refreshToken = localStorage.getItem("refreshToken");
+  //     const memberId = localStorage.getItem("memberId"); // memberId를 어딘가에 저장했다고 가정
+  //     if (refreshToken && memberId) {
+  //       reissueTokenMutation.mutate(memberId, {
+  //         onSuccess: (data) => {
+  //           localStorage.setItem("accessToken", data.accessToken);
+  //           localStorage.setItem("refreshToken", data.refreshToken);
+  //         },
+  //         onError: (error) => {
+  //           console.error("Token reissue failed", error);
+  //           // 토큰 재발급 실패 시 처리 (예: 로그아웃)
+  //         },
+  //       });
+  //     }
+  //   }, []);
+
+  return (
+    <S.Wrapper>
+      <S.Header />
+      <S.Content>
+        <S.Title>Crush My Server</S.Title>
+        <S.LoginForm onSubmit={handleSignUp}>
+          <S.InputSection>
+            <S.InputLabel htmlFor="nickname">nickname</S.InputLabel>
+            <S.Input
+              required
+              id="nickname"
+              value={nickname}
+              onChange={handleInputChange(setNickname)}
+            />
+          </S.InputSection>
+          <S.InputSection>
+            <S.InputLabel htmlFor="password">password</S.InputLabel>
+            <S.Input
+              required
+              id="password"
+              type="password"
+              value={password}
+              onChange={handleInputChange(setPassword)}
+            />
+          </S.InputSection>
+          <S.SubmitButton type="submit" disabled={signUpLoading}>
+            {signUpLoading ? "submitting..." : "sign in"}
+          </S.SubmitButton>
+        </S.LoginForm>
+        {errorMessage && <S.ErrorMessage>{errorMessage}</S.ErrorMessage>}
+      </S.Content>
+    </S.Wrapper>
+  );
+};
 
 export default LoginPage;
+
+const shakeAnimation = keyframes`
+  0% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  50% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+`;
 
 const S = {
   Wrapper: styled.div`
@@ -78,7 +152,8 @@ const S = {
   `,
   InputLabel: styled.label`
     font-size: ${({ theme }) => theme.fontSizes.medium};
-    min-width: 6rem;
+    min-width: 9.25rem;
+    text-transform: uppercase;
   `,
   Input: styled.input`
     width: 100%;
@@ -87,8 +162,16 @@ const S = {
     background: ${({ theme }) => theme.colors.secondary};
     color: ${({ theme }) => theme.colors.text};
     font-size: ${({ theme }) => theme.fontSizes.medium};
-    border: none;
+    border: 2px solid transparent;
     padding: 0 1rem;
+    transition: border-color 0.3s;
+
+    ${(props) =>
+      props.isEmpty &&
+      css`
+        border-color: ${({ theme }) => theme.colors.error};
+        animation: ${shakeAnimation} 0.5s;
+      `}
 
     @media (min-width: ${({ theme }) => theme.breakpoints.mobile}) {
       width: 19.5rem;
@@ -98,5 +181,25 @@ const S = {
     font-weight: 700;
     font-size: ${({ theme }) => theme.fontSizes.medium};
     color: ${({ theme }) => theme.colors.error};
+  `,
+  SubmitButton: styled.button`
+    width: 100%;
+    height: 3.5rem;
+    border-radius: 0.625rem;
+    background: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text};
+    font-size: ${({ theme }) => theme.fontSizes.medium};
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background: ${({ theme }) => theme.colors.secondary};
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
   `,
 };
