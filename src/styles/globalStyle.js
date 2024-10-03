@@ -1,6 +1,9 @@
 import { createGlobalStyle } from "styled-components";
+import fontFaces from "./font";
 
 const GlobalStyle = createGlobalStyle`
+  ${fontFaces};
+  
   * {
     margin: 0;
     padding: 0;
@@ -12,7 +15,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'silkscreen', sans-serif;
     background-color: ${({ theme }) => theme.colors.background};
     color: ${({ theme }) => theme.colors.text};
   }

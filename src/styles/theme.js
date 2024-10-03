@@ -15,6 +15,9 @@ const theme = {
   breakpoints: {
     mobile: "768px",
   },
+  fonts: {
+    main: "'silkscreen', sans-serif",
+  },
 };
 
 export default theme;
