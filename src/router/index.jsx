@@ -1,8 +1,15 @@
 import React from 'react';
-import { Outlet, Link, createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
-// import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import {
+  Outlet,
+  Link,
+  createRouter,
+  createRoute,
+  createRootRoute,
+  redirect,
+} from '@tanstack/react-router';
 import HomePage from '../pages/Home.page';
 import LoginPage from '../pages/Login.page';
+import { checkAuth } from '../api/factory';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -17,7 +24,6 @@ const rootRoute = createRootRoute({
       </div>
       <hr />
       <Outlet />
-      {/* {process.env.NODE_ENV === 'development' && <TanStackRouterDevtools />} */}
     </>
   ),
 });
@@ -26,6 +32,16 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: HomePage,
+  beforeLoad: async () => {
+    if (!checkAuth()) {
+      throw redirect({
+        to: '/login',
+        search: {
+          redirect: '/',
+        },
+      });
+    }
+  },
 });
 
 const loginRoute = createRoute({
@@ -36,6 +52,8 @@ const loginRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([indexRoute, loginRoute]);
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+  routeTree,
+});
 
 export default router;

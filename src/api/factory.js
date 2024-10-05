@@ -1,12 +1,37 @@
 import axiosInstance from './instance';
 
+export const checkAuth = () => {
+  const token = localStorage.getItem('accessToken');
+  return !!token;
+};
+
+export const getTokenPayload = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
+  } catch (error) {
+    console.error('Invalid token', error);
+    return null;
+  }
+};
+
 const signUp = async (data) => {
   const response = await axiosInstance.post('/auth/sign-up', data);
   return response.data;
 };
 
-const reissueToken = async (memberId) => {
-  const response = await axiosInstance.post(`/auth/reissue?memberId=${memberId}`);
+export const reissueToken = async () => {
+  const refreshToken = localStorage.getItem('refreshToken');
+
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const response = await axiosInstance.post('/auth/reissue', {
+    refreshToken: refreshToken,
+  });
+
   return response.data;
 };
 
@@ -80,29 +105,3 @@ export const queryKeys = {
     },
   },
 };
-
-// export const TokenResponsePropTypes = PropTypes.shape({
-//   accessToken: PropTypes.string.isRequired,
-//   refreshToken: PropTypes.string.isRequired,
-// });
-
-// export const ErrorResponsePropTypes = PropTypes.shape({
-//   exceptionCode: PropTypes.number.isRequired,
-//   message: PropTypes.string.isRequired,
-// });
-
-// export const ClickResultPropTypes = PropTypes.shape({
-//   count: PropTypes.string.isRequired,
-//   clickRank: PropTypes.objectOf(PropTypes.string).isRequired,
-// });
-
-// export const ChatMessagePropTypes = PropTypes.shape({
-//   id: PropTypes.string.isRequired,
-//   senderNickname: PropTypes.string.isRequired,
-//   content: PropTypes.string.isRequired,
-//   createdAt: PropTypes.string.isRequired,
-// });
-
-// export const ChatMessagesResponsePropTypes = PropTypes.shape({
-//   groupChatMessageResponses: PropTypes.arrayOf(ChatMessagePropTypes).isRequired,
-// });

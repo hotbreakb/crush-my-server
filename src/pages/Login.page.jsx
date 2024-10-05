@@ -1,56 +1,35 @@
-import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import { useSignUp, useReissueToken } from "../hooks";
+import React, { useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
+import { useAuth } from '../contexts';
+import { useSignUp } from '../hooks';
+import styled from 'styled-components';
 
 const LoginPage = () => {
-  const [nickname, setNickname] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const router = useRouter();
 
-  // TODO: reissueToken
-  const reissueTokenMutation = useReissueToken();
+  const [nickname, setNickname] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleSignUpSuccess = (data) => {
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-
-    navigate("/");
-  };
-
-  const {
-    mutate: signUp,
-    isLoading: signUpLoading,
-    errorMessage,
-  } = useSignUp({
-    onSuccess: handleSignUpSuccess,
+  const signUpMutation = useSignUp({
+    onSuccess: (data) => {
+      login(data, data.memberId);
+      router.navigate({ to: '/' });
+    },
+    onError: (error) => {
+      console.error('Sign up failed', error);
+    },
   });
 
   const handleSignUp = (e) => {
     e.preventDefault();
-
     if (!nickname || !password) return;
-    signUp({ nickname, password });
+    signUpMutation.mutate({ nickname, password });
   };
 
   const handleInputChange = (setter) => (e) => {
     setter(e.target.value);
   };
-
-  //   useEffect(() => {
-  //     const refreshToken = localStorage.getItem("refreshToken");
-  //     const memberId = localStorage.getItem("memberId"); // memberId를 어딘가에 저장했다고 가정
-  //     if (refreshToken && memberId) {
-  //       reissueTokenMutation.mutate(memberId, {
-  //         onSuccess: (data) => {
-  //           localStorage.setItem("accessToken", data.accessToken);
-  //           localStorage.setItem("refreshToken", data.refreshToken);
-  //         },
-  //         onError: (error) => {
-  //           console.error("Token reissue failed", error);
-  //           // 토큰 재발급 실패 시 처리 (예: 로그아웃)
-  //         },
-  //       });
-  //     }
-  //   }, []);
 
   return (
     <S.Wrapper>
@@ -76,11 +55,11 @@ const LoginPage = () => {
               onChange={handleInputChange(setPassword)}
             />
           </S.InputSection>
-          <S.SubmitButton type="submit" disabled={signUpLoading}>
-            {signUpLoading ? "submitting..." : "sign in"}
+          <S.SubmitButton type="submit" disabled={signUpMutation.isLoading}>
+            {signUpMutation.isLoading ? 'submitting...' : 'sign in'}
           </S.SubmitButton>
         </S.LoginForm>
-        {errorMessage && <S.ErrorMessage>{errorMessage}</S.ErrorMessage>}
+        {signUpMutation.error && <S.ErrorMessage>{signUpMutation.error.message}</S.ErrorMessage>}
       </S.Content>
     </S.Wrapper>
   );
