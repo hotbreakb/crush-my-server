@@ -1,8 +1,6 @@
-// src/services/socketService.js
-
 import { Client } from '@stomp/stompjs';
+import { CHAT_ROOM_ID } from '../api/factory';
 
-const CHAT_ROOM_ID = '1';
 const SOCKET_URL = 'wss://crash-my-server.site/ws';
 
 const SUBSCRIPTION_TOPICS = [

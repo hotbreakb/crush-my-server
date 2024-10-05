@@ -51,8 +51,24 @@ export const useGetClickResult = (memberId) => useQuery(queryKeys.click.result(m
 
 export const useClickRequest = () => useMutation(queryKeys.click.request.mutationFn);
 
-export const useEnterChatRoom = () => useMutation(queryKeys.chat.enter.mutationFn);
-export const useLeaveChatRoom = () => useMutation(queryKeys.chat.leave.mutationFn);
-export const useGetChatMessages = ({ senderId, chatRoomId }) =>
-  useQuery(queryKeys.chat.messages({ senderId, chatRoomId }));
+export const useEnterChatRoom = () =>
+  useQuery({
+    queryKey: queryKeys.chat.enter.queryKey,
+    queryFn: queryKeys.chat.enter.queryFn,
+  });
+
+export const useLeaveChatRoom = ({ senderId }) =>
+  useQuery({
+    queryKey: queryKeys.chat.leave.queryKey,
+    queryFn: queryKeys.chat.leave.queryFn({ senderId }),
+    enabled: !!senderId,
+  });
+
+export const useGetChatMessages = ({ senderId }) =>
+  useQuery({
+    queryKey: queryKeys.chat.messages.queryKey,
+    queryFn: queryKeys.chat.messages.queryFn({ senderId }),
+    enabled: !!senderId,
+  });
+
 export const useReceiveStompMessage = () => useMutation(queryKeys.chat.stomp.mutationFn);

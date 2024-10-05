@@ -171,11 +171,6 @@ const S = {
       width: 19.5rem;
     }
   `,
-  ErrorMessage: styled.span`
-    font-weight: 700;
-    font-size: ${({ theme }) => theme.fontSizes.medium};
-    color: ${({ theme }) => theme.colors.error};
-  `,
   SubmitButton: styled.button`
     width: 100%;
     height: 3.5rem;

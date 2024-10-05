@@ -1,19 +1,10 @@
 import axiosInstance from './instance';
 
+export const CHAT_ROOM_ID = '1';
+
 export const checkAuth = () => {
   const token = localStorage.getItem('accessToken');
   return !!token;
-};
-
-export const getTokenPayload = (token) => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(window.atob(base64));
-  } catch (error) {
-    console.error('Invalid token', error);
-    return null;
-  }
 };
 
 const signUp = async (data) => {
@@ -35,34 +26,44 @@ export const reissueToken = async () => {
   return response.data;
 };
 
-const clickRequest = async (memberId) => {
-  const response = await axiosInstance.post(`/click?memberId=${memberId}`);
+const clickRequest = async () => {
+  const response = await axiosInstance.post(`/click`);
   return response.data;
 };
 
-const getClickResult = async (memberId) => {
-  const response = await axiosInstance.get(`/click?memberId=${memberId}`);
+const getClickResult = async () => {
+  const response = await axiosInstance.get(`/click`);
   return response.data;
 };
 
-const enterChatRoom = async ({ senderId, chatRoomId }) => {
-  const response = await axiosInstance.get(
-    `/group-chat/enter?senderId=${senderId}&chatRoomId=${chatRoomId}`
-  );
+const enterChatRoom = async ({ senderId }) => {
+  console.log(senderId);
+  const response = await axiosInstance.get(`/group-chat/enter`, {
+    params: {
+      senderId,
+      chatRoomId: CHAT_ROOM_ID,
+    },
+  });
   return response.data;
 };
 
-const leaveChatRoom = async ({ senderId, chatRoomId }) => {
-  const response = await axiosInstance.get(
-    `/group-chat/leaver?senderId=${senderId}&chatRoomId=${chatRoomId}`
-  );
+const leaveChatRoom = async ({ senderId }) => {
+  const response = await axiosInstance.get(`/group-chat/leaver?senderId=${senderId}`, {
+    params: {
+      senderId,
+      chatRoomId: CHAT_ROOM_ID,
+    },
+  });
   return response.data;
 };
 
-const getChatMessages = async ({ senderId, chatRoomId }) => {
-  const response = await axiosInstance.get(
-    `/group-chat/messages?senderId=${senderId}&chatRoomId=${chatRoomId}`
-  );
+const getChatMessages = async ({ senderId }) => {
+  const response = await axiosInstance.get(`/group-chat/messages?senderId=${senderId}`, {
+    params: {
+      senderId,
+      chatRoomId: CHAT_ROOM_ID,
+    },
+  });
   return response.data;
 };
 
@@ -91,10 +92,12 @@ export const queryKeys = {
   },
   chat: {
     enter: {
-      mutationFn: enterChatRoom,
+      queryKey: ['chatEnter'],
+      queryFn: enterChatRoom,
     },
     leave: {
-      mutationFn: leaveChatRoom,
+      queryKey: ['chatLeave'],
+      queryFn: leaveChatRoom,
     },
     messages: ({ senderId, chatRoomId }) => ({
       queryKey: ['chatMessages', senderId, chatRoomId],

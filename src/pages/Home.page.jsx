@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import styled, { css } from 'styled-components';
+import { useEnterChatRoom } from '../hooks';
+import { useAuth } from '../contexts';
 
 const NUM_OF_TOP_RANKING = 5;
 const RANK_COLORS = ['#FF0000', '#FFA800', '#FFF500', '#0EB500', '#1B32FF'];
@@ -37,6 +39,7 @@ const ChatMessageItem = React.memo(({ message }) => {
 });
 
 const HomePage = () => {
+  const { id } = useAuth();
   const [myCount, setMyCount] = useState(0);
   const [chatInput, setChatInput] = useState('');
 
@@ -69,6 +72,8 @@ const HomePage = () => {
     { type: 'leave', content: '두루미님이 퇴장하셨습니다' },
   ];
 
+  useEnterChatRoom({ senderId: id });
+
   const handleRequest = useCallback(() => {
     setMyCount((prevCount) => prevCount + 1);
   }, []);
@@ -97,7 +102,7 @@ const HomePage = () => {
           </S.ButtonWrapper>
           <S.Ranking>
             {displayRankingData.map((info, index) => (
-              <RankingItem key={info.nickname} info={info} index={index} />
+              <RankingItem key={`${info.nickname}-${info.index}`} info={info} index={index} />
             ))}
           </S.Ranking>
         </S.CountWrapper>
@@ -105,7 +110,7 @@ const HomePage = () => {
         <S.ChattingWrapper>
           <S.ChatMessages>
             {chatMessages.map((message, index) => (
-              <ChatMessageItem key={index} message={message} />
+              <ChatMessageItem key={`${message.content}-${index}`} message={message} />
             ))}
           </S.ChatMessages>
           <S.UserInput>
