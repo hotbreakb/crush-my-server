@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { useAuth } from '../contexts';
 import { useSignUp } from '../hooks';
+import SocketService from '../service/socket.service';
 import styled from 'styled-components';
 
 const LoginPage = () => {
@@ -10,19 +11,50 @@ const LoginPage = () => {
 
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
+  const [connectionError, setConnectionError] = useState('');
+  const [socketService, setSocketService] = useState(null);
 
   const signUpMutation = useSignUp({
     onSuccess: (data) => {
       login(data, data.memberId);
-      router.navigate({ to: '/' });
+
+      const newSocketService = new SocketService({
+        onConnect: () => {
+          setConnectionError('');
+          router.navigate({ to: '/' });
+        },
+        onConnectionError: (error) => {
+          setConnectionError('Failed to connect to the server. Please try again.');
+          console.error('Connection error:', error);
+        },
+        onChatError: () => {
+          setConnectionError('채팅이 불가합니다');
+        },
+        onClickError: () => {
+          setConnectionError('클릭이 불가합니다');
+        },
+        onMessage: (topic, message) => {
+          console.log(`Received message from ${topic}:`, message);
+        },
+      });
+
+      newSocketService.connect(nickname);
+      setSocketService(newSocketService);
     },
     onError: (error) => {
       console.error('Sign up failed', error);
     },
   });
 
+  useEffect(() => {
+    return () => {
+      socketService?.disconnect();
+    };
+  }, [socketService]);
+
   const handleSignUp = (e) => {
     e.preventDefault();
+    setConnectionError('');
     if (!nickname || !password) return;
     signUpMutation.mutate({ nickname, password });
   };
@@ -60,6 +92,7 @@ const LoginPage = () => {
           </S.SubmitButton>
         </S.LoginForm>
         {signUpMutation.error && <S.ErrorMessage>{signUpMutation.error.message}</S.ErrorMessage>}
+        {connectionError && <S.ErrorMessage>{connectionError}</S.ErrorMessage>}
       </S.Content>
     </S.Wrapper>
   );
@@ -162,5 +195,10 @@ const S = {
       opacity: 0.7;
       cursor: not-allowed;
     }
+  `,
+  ErrorMessage: styled.span`
+    font-weight: bold;
+    font-size: ${({ theme }) => theme.fontSizes.medium};
+    color: ${({ theme }) => theme.colors.error};
   `,
 };
