@@ -22,9 +22,9 @@ class SocketService {
     this.nickname = nickname;
     this.client = new Client({
       brokerURL: SOCKET_URL,
-      //   debug: (str) => {
-      //     console.log(str);
-      //   },
+      debug: (str) => {
+        console.log(str);
+      },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

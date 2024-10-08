@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 const groupMessages = (messages) => {
   return messages.reduce((groups, message, index) => {
-    if (index === 0 || message.nickname !== messages[index - 1].nickname) {
+    if (index === 0 || !message.nickname || message.nickname !== messages[index - 1].nickname) {
       groups.push([message]);
     } else {
       groups[groups.length - 1].push(message);
@@ -43,18 +43,18 @@ export const Chat = ({ messages, currentUser, onSendMessage, disabled }) => {
         {groupedMessages.map((group, groupIndex) => (
           <S.MessageGroup key={groupIndex}>
             {group.map((message, index) => {
+              if (!message.nickname)
+                return <S.SystemMessage key={message.uuid}>{message.content}</S.SystemMessage>;
+
               const isCurrentUser = message.nickname === currentUser.nickname;
 
               return (
-                <S.MessageWrapper
-                  key={`${message.nickname}-${message.content}-${index}`}
-                  isCurrentUser={isCurrentUser}
-                >
+                <S.UserMessage key={message.uuid} isCurrentUser={isCurrentUser}>
                   {index === 0 && !isCurrentUser && (
                     <S.NicknameLabel>{message.nickname}</S.NicknameLabel>
                   )}
                   <S.MessageBubble isCurrentUser={isCurrentUser}>{message.content}</S.MessageBubble>
-                </S.MessageWrapper>
+                </S.UserMessage>
               );
             })}
           </S.MessageGroup>
@@ -103,7 +103,12 @@ const S = {
     flex-direction: column;
     gap: 0.3125rem;
   `,
-  MessageWrapper: styled.div`
+  SystemMessage: styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  `,
+  UserMessage: styled.div`
     display: flex;
     flex-direction: column;
     align-items: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
