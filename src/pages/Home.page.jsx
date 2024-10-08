@@ -1,7 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { css } from 'styled-components';
-import { useEnterChatRoom } from '../hooks';
+import { useEnterChatRoom, useGetChatMessages, useGetClickResult, useClickRequest } from '../hooks';
 import { useAuth } from '../contexts';
+import SocketService from '../service/socket.service';
+import { Chat } from '../components/Chat';
+import Toast from '../components/Toast';
+import { CHAT_ROOM_ID, queryKeys } from '../api/factory';
+import { useQueryClient } from '@tanstack/react-query';
 
 const NUM_OF_TOP_RANKING = 5;
 const RANK_COLORS = ['#FF0000', '#FFA800', '#FFF500', '#0EB500', '#1B32FF'];
@@ -19,109 +24,137 @@ const RankingItem = React.memo(({ info, index }) => (
   </S.Chip>
 ));
 
-const ChatMessageItem = React.memo(({ message }) => {
-  if (message.type === 'enter' || message.type === 'leave') {
-    return <S.SystemMessage>{message.content}</S.SystemMessage>;
-  }
-  if (message.sender === '나') {
-    return (
-      <S.MyMessage>
-        <S.MessageContent>{message.content}</S.MessageContent>
-      </S.MyMessage>
-    );
-  }
-  return (
-    <S.OtherMessage>
-      <S.SenderName>{message.sender}</S.SenderName>
-      <S.MessageContent>{message.content}</S.MessageContent>
-    </S.OtherMessage>
-  );
-});
-
 const HomePage = () => {
-  const { id } = useAuth();
-  const [myCount, setMyCount] = useState(0);
-  const [chatInput, setChatInput] = useState('');
+  const queryClient = useQueryClient();
 
-  const rankingData = [
-    { nickname: '호랑이', count: 0 },
-    { nickname: '사자', count: 0 },
-    { nickname: '기린', count: 0 },
-    { nickname: '코끼리', count: 0 },
-    { nickname: '팬더', count: 0 },
-    { nickname: '원숭이', count: 0 },
-    { nickname: '캥거루', count: 0 },
-  ];
+  const { user } = useAuth();
+  const [socketService, setSocketService] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
-  const displayRankingData = Array.from(
-    { length: 10 },
-    (_, index) => rankingData[index] || { nickname: '' }
-  );
+  useEnterChatRoom({
+    senderId: user.id,
+    onError: () => {
+      handleError('채팅방에 입장할 수 없습니다');
+    },
+  });
 
-  const chatMessages = [
-    { type: 'enter', content: '호랑이님이 입장하셨습니다' },
-    { type: 'message', sender: '호랑이', content: '안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'message', sender: '나', content: '나도 안녕' },
-    { type: 'leave', content: '두루미님이 퇴장하셨습니다' },
-  ];
+  const { refetch: getChatMessages } = useGetChatMessages({
+    senderId: user.id,
+    select: (data) => data.groupChatMessageResponses,
+    onSuccess: (data) => {
+      setMessages(data);
+    },
+    onError: () => {
+      handleError('대화 내역을 불러올 수 없습니다.');
+    },
+  });
 
-  useEnterChatRoom({ senderId: id });
+  const { data } = useGetClickResult({
+    select: (data) => {
+      const sorted = Object.entries(data.clickRank)
+        .sort((a, b) => a - b)
+        .reduce((res, value) => {
+          res.push({ nickname: value[0], count: value[1] });
+          return res;
+        }, []);
 
-  const handleRequest = useCallback(() => {
-    setMyCount((prevCount) => prevCount + 1);
-  }, []);
+      const clickRank = Array.from({ length: 10 }, (_, index) => sorted[index] || { nickname: '' });
 
-  const handleInputChange = useCallback((e) => {
-    setChatInput(e.target.value);
-  }, []);
+      return {
+        count: data.count,
+        clickRank,
+      };
+    },
+  });
 
-  const handleSendMessage = useCallback(() => {
-    if (chatInput.trim()) {
-      setChatInput('');
+  const { mutate: clickRequest } = useClickRequest();
+
+  const handleRequestClick = () => {
+    if (isConnected) clickRequest({ memberId: user.id });
+  };
+
+  const handleSendMessage = (message) => {
+    if (isConnected) {
+      socketService.client.publish({
+        destination: `/sub/group-chat/${CHAT_ROOM_ID}`,
+        body: JSON.stringify({ nickname: user.nickname, content: message }),
+      });
     }
-  }, [chatInput]);
+  };
+
+  const handleError = (message) => {
+    setErrorMessage(message);
+  };
+
+  const handleCloseToast = () => {
+    setErrorMessage('');
+  };
+
+  useEffect(() => {
+    const newSocketService = new SocketService({
+      onConnect: () => {
+        setIsConnected(true);
+        handleError('');
+        getChatMessages();
+      },
+      onConnectionError: () => {
+        setIsConnected(false);
+        handleError('연결에 실패했습니다. 일부 기능을 사용할 수 없습니다.');
+      },
+      onChatError: () => {
+        handleError('채팅 기능을 사용할 수 없습니다.');
+      },
+      onClickError: () => {
+        handleError('클릭 기능을 사용할 수 없습니다.');
+      },
+      onMessage: (topic, message) => {
+        const parsedMessage = JSON.parse(message);
+
+        if (!topic.includes('/sub/click')) {
+          setMessages((prev) => [...prev, parsedMessage]);
+        }
+      },
+    });
+
+    if (!user.nickname) throw new Error('user nickname is undefined');
+    newSocketService.connect(user.nickname);
+    setSocketService(newSocketService);
+
+    return () => {
+      newSocketService.disconnect();
+    };
+  }, [user.nickname]);
 
   return (
     <S.Wrapper>
       <S.Content>
         <S.CountWrapper>
           <S.Title>Crush My Server</S.Title>
+          {errorMessage && <Toast message={errorMessage} onClose={handleCloseToast} />}
+
           <S.ButtonWrapper>
             <S.Action>
-              <S.Button onClick={handleRequest}>request</S.Button>
-              <S.Count>my count : {myCount}</S.Count>
+              <S.Button onClick={handleRequestClick} disabled={!isConnected}>
+                request
+              </S.Button>
+              <S.Count>my count : {data?.count ?? 0}</S.Count>
             </S.Action>
             <S.Image src="/path-to-your-image.jpg" alt="Descriptive text" />
           </S.ButtonWrapper>
           <S.Ranking>
-            {displayRankingData.map((info, index) => (
-              <RankingItem key={`${info.nickname}-${info.index}`} info={info} index={index} />
+            {(data?.clickRank ?? []).map((info, index) => (
+              <RankingItem key={`${info.nickname}-${index}`} info={info} index={index} />
             ))}
           </S.Ranking>
         </S.CountWrapper>
-
-        <S.ChattingWrapper>
-          <S.ChatMessages>
-            {chatMessages.map((message, index) => (
-              <ChatMessageItem key={`${message.content}-${index}`} message={message} />
-            ))}
-          </S.ChatMessages>
-          <S.UserInput>
-            <S.Input
-              placeholder="채팅을 입력하세요"
-              value={chatInput}
-              onChange={handleInputChange}
-            />
-            <S.Button onClick={handleSendMessage}>전송</S.Button>
-          </S.UserInput>
-        </S.ChattingWrapper>
+        <Chat
+          messages={messages}
+          currentUser={user}
+          onSendMessage={handleSendMessage}
+          disabled={!isConnected}
+        />
       </S.Content>
     </S.Wrapper>
   );
@@ -194,60 +227,6 @@ export const S = {
     font-weight: bold;
     min-width: 20px;
     text-align: center;
-  `,
-  ChattingWrapper: styled.div`
-    ${flexColumn}
-    width: 50%;
-    height: 100vh;
-    background: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.text};
-    padding: ${({ theme }) => theme.spacing.large};
-  `,
-  ChatMessages: styled.div`
-    ${flexColumn}
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: ${({ theme }) => theme.spacing.medium};
-    gap: ${({ theme }) => theme.spacing.small};
-    padding-right: ${({ theme }) => theme.spacing.small};
-  `,
-  UserInput: styled.div`
-    display: flex;
-    gap: ${({ theme }) => theme.spacing.small};
-    padding-top: ${({ theme }) => theme.spacing.medium};
-  `,
-  SystemMessage: styled.span`
-    align-self: center;
-    font-weight: bold;
-    color: ${({ theme }) => theme.colors.text};
-    padding: ${({ theme }) => theme.spacing.small};
-    font-size: ${({ theme }) => theme.fontSizes.small};
-  `,
-  MyMessage: styled.div`
-    align-self: flex-end;
-    max-width: 70%;
-  `,
-  OtherMessage: styled.div`
-    align-self: flex-start;
-    max-width: 70%;
-  `,
-  SenderName: styled.div`
-    font-size: ${({ theme }) => theme.fontSizes.small};
-    margin-bottom: 4px;
-  `,
-  MessageContent: styled.div`
-    background-color: ${({ theme }) => theme.colors.secondary};
-    padding: ${({ theme }) => theme.spacing.small};
-    border-radius: 10px;
-  `,
-  Input: styled.input`
-    flex: 1;
-    border: 1px solid ${({ theme }) => theme.colors.border};
-    border-radius: 30px;
-    background: transparent;
-    padding: ${({ theme }) => theme.spacing.small} ${({ theme }) => theme.spacing.medium};
-    font-size: ${({ theme }) => theme.fontSizes.small};
-    color: ${({ theme }) => theme.colors.text};
   `,
   Title: styled.h1`
     font-size: ${({ theme }) => theme.fontSizes.large};

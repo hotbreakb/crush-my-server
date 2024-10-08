@@ -3,17 +3,13 @@ import { CHAT_ROOM_ID } from '../api/factory';
 
 const SOCKET_URL = 'wss://crash-my-server.site/ws';
 
-const SUBSCRIPTION_TOPICS = [
-  `/sub/enter/${CHAT_ROOM_ID}`,
-  `/sub/group-chat/${CHAT_ROOM_ID}`,
-  `/sub/leave/${CHAT_ROOM_ID}`,
-  '/sub/click-rank',
-];
-
 class SocketService {
   constructor(props) {
     this.client = null;
-    this.subscriptions = [];
+    this.activeSubscriptions = new Map();
+    this.processedMessages = new Set();
+    this.isConnected = false;
+    this.reconnecting = false;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.nickname = '';
@@ -21,26 +17,28 @@ class SocketService {
   }
 
   connect(nickname) {
+    if (this.isConnected) return;
+
     this.nickname = nickname;
     this.client = new Client({
       brokerURL: SOCKET_URL,
-      debug: (str) => {
-        console.log(str);
-      },
+      //   debug: (str) => {
+      //     console.log(str);
+      //   },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      onConnect: this.handleConnect,
+      onStompError: this.handleStompError,
+      onWebSocketClose: this.handleWebSocketClose,
     });
-
-    this.client.onConnect = this.handleConnect;
-    this.client.onStompError = this.handleStompError;
-    this.client.onWebSocketClose = this.handleWebSocketClose;
 
     this.client.activate();
   }
 
   handleConnect = () => {
     console.log('STOMP Connected');
+    this.isConnected = true;
     this.reconnectAttempts = 0;
     this.subscribeToTopics();
     this.props.onConnect();
@@ -48,69 +46,108 @@ class SocketService {
 
   handleStompError = (frame) => {
     console.error('STOMP Error:', frame.headers['message']);
+    this.isConnected = false;
+
+    const errorMessage = frame.headers['message'];
+    if (errorMessage.includes('Authentication failed')) {
+      this.props.onConnectionError('인증에 실패했습니다. 다시 로그인해주세요.');
+    } else if (errorMessage.includes('Server unavailable')) {
+      this.props.onConnectionError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } else {
+      this.props.onConnectionError('연결 중 오류가 발생했습니다.');
+    }
+
     this.handleReconnect();
-    this.props.onConnectionError();
   };
 
   handleWebSocketClose = () => {
     console.log('WebSocket Closed');
+    this.isConnected = false;
+    this.unsubscribeAll();
     this.handleReconnect();
   };
 
   handleReconnect = () => {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (this.reconnectAttempts < this.maxReconnectAttempts && !this.reconnecting) {
+      this.reconnecting = true;
       this.reconnectAttempts++;
       console.log(
         `Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
       );
+
       setTimeout(() => {
         this.client?.activate();
+        this.reconnecting = false;
       }, 5000);
-    } else {
+    } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnect attempts reached');
+      this.props.onConnectionError(
+        '최대 재연결 시도 횟수를 초과했습니다. 페이지를 새로고침해주세요.'
+      );
     }
   };
 
   subscribeToTopics = () => {
-    if (!this.client) return;
+    if (!this.client || !this.isConnected) return;
 
-    this.subscriptions = SUBSCRIPTION_TOPICS.map((topic) =>
-      this.client.subscribe(topic, (message) => {
-        this.props.onMessage(topic, message.body);
-      })
+    this.unsubscribeAll();
+
+    const chatTopics = [
+      `/sub/enter/${CHAT_ROOM_ID}`,
+      `/sub/group-chat/${CHAT_ROOM_ID}`,
+      `/sub/leave/${CHAT_ROOM_ID}`,
+    ];
+    const clickTopics = [`/sub/click/${this.nickname}`, '/sub/click-rank'];
+    const topics = [...chatTopics, ...clickTopics];
+
+    topics.forEach((topic) => {
+      if (!this.activeSubscriptions.has(topic)) {
+        const subscription = this.client.subscribe(topic, (message) => {
+          const messageId = message.headers['message-id'];
+
+          if (!this.processedMessages.has(messageId)) {
+            this.processedMessages.add(messageId);
+
+            this.props.onMessage(topic, message.body);
+
+            setTimeout(() => {
+              this.processedMessages.delete(messageId);
+            }, 60000);
+          } else {
+            console.log(`Duplicate message received on ${topic}:`, messageId);
+          }
+        });
+        this.activeSubscriptions.set(topic, subscription);
+      }
+    });
+
+    const isChatSubscriptionMissing = chatTopics.some(
+      (topic) => !this.activeSubscriptions.has(topic)
+    );
+    const isClickSubscriptionMissing = clickTopics.some(
+      (topic) => !this.activeSubscriptions.has(topic)
     );
 
-    // Add click subscription separately as it includes the nickname
-    this.subscriptions.push(
-      this.client.subscribe(`/sub/click/${this.nickname}`, (message) => {
-        this.props.onMessage(`/sub/click/${this.nickname}`, message.body);
-      })
-    );
+    if (isChatSubscriptionMissing) {
+      this.props.onChatError();
+    }
 
-    // Check for subscription errors
-    if (this.subscriptions.some((sub) => !sub.id)) {
-      if (
-        [
-          `/sub/enter/${CHAT_ROOM_ID}`,
-          `/sub/group-chat/${CHAT_ROOM_ID}`,
-          `/sub/leave/${CHAT_ROOM_ID}`,
-        ].some((topic) => !this.subscriptions.find((sub) => sub.destination === topic)?.id)
-      ) {
-        this.props.onChatError();
-      }
-      if (
-        [`/sub/click/${this.nickname}`, '/sub/click-rank'].some(
-          (topic) => !this.subscriptions.find((sub) => sub.destination === topic)?.id
-        )
-      ) {
-        this.props.onClickError();
-      }
+    if (isClickSubscriptionMissing) {
+      this.props.onClickError();
     }
   };
 
+  unsubscribeAll = () => {
+    this.activeSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.activeSubscriptions.clear();
+  };
+
   disconnect() {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.client?.deactivate();
+    this.unsubscribeAll();
+    if (this.client) {
+      this.client.deactivate();
+    }
+    this.isConnected = false;
   }
 }
 

@@ -37,7 +37,6 @@ const getClickResult = async () => {
 };
 
 const enterChatRoom = async ({ senderId }) => {
-  console.log(senderId);
   const response = await axiosInstance.get(`/group-chat/enter`, {
     params: {
       senderId,
@@ -48,7 +47,7 @@ const enterChatRoom = async ({ senderId }) => {
 };
 
 const leaveChatRoom = async ({ senderId }) => {
-  const response = await axiosInstance.get(`/group-chat/leaver?senderId=${senderId}`, {
+  const response = await axiosInstance.get(`/group-chat/leave`, {
     params: {
       senderId,
       chatRoomId: CHAT_ROOM_ID,
@@ -58,7 +57,7 @@ const leaveChatRoom = async ({ senderId }) => {
 };
 
 const getChatMessages = async ({ senderId }) => {
-  const response = await axiosInstance.get(`/group-chat/messages?senderId=${senderId}`, {
+  const response = await axiosInstance.get(`/group-chat/messages`, {
     params: {
       senderId,
       chatRoomId: CHAT_ROOM_ID,
@@ -91,17 +90,17 @@ export const queryKeys = {
     }),
   },
   chat: {
-    enter: {
-      queryKey: ['chatEnter'],
-      queryFn: enterChatRoom,
-    },
+    enter: (senderId) => ({
+      queryKey: ['chatEnter', senderId],
+      queryFn: () => enterChatRoom({ senderId }),
+    }),
     leave: {
       queryKey: ['chatLeave'],
       queryFn: leaveChatRoom,
     },
-    messages: ({ senderId, chatRoomId }) => ({
-      queryKey: ['chatMessages', senderId, chatRoomId],
-      queryFn: () => getChatMessages({ senderId, chatRoomId }),
+    messages: (senderId) => ({
+      queryKey: ['chatMessages', senderId],
+      queryFn: () => getChatMessages({ senderId }),
     }),
     stomp: {
       mutationFn: receiveStompMessage,

@@ -3,32 +3,40 @@ import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
-const getId = (token) => {
+const getUserInfo = (token) => {
+  if (!token) return { id: null };
   const decoded = jwtDecode(token);
-  return decoded.jti;
+  return { id: decoded.jti };
 };
 
 export const AuthProvider = ({ children }) => {
-  const [id, setId] = useState();
+  const [user, setUser] = useState({ id: null, nickname: null });
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    token && setId(getId(token));
+    const storedNickname = localStorage.getItem('userNickname');
+    if (token) {
+      const { id } = getUserInfo(token);
+      setUser({ id, nickname: storedNickname });
+    }
   }, []);
 
-  const login = (tokens) => {
+  const login = (tokens, nickname) => {
     localStorage.setItem('accessToken', tokens.accessToken);
     localStorage.setItem('refreshToken', tokens.refreshToken);
-    setId(getId(tokens.accessToken));
+    localStorage.setItem('userNickname', nickname);
+    const { id } = getUserInfo(tokens.accessToken);
+    setUser({ id, nickname });
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    setId(getId(null));
+    localStorage.removeItem('userNickname');
+    setUser({ id: null, nickname: null });
   };
 
-  return <AuthContext.Provider value={{ id, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
