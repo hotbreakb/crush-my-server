@@ -9,13 +9,15 @@ jobs:
   Deploy-Production:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Install Yarn
-        run: npm install --global yarn
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: Set Yarn Version
-        run: yarn set version 3.6.1
+      - name: Install dependencies
+        run: yarn install
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
