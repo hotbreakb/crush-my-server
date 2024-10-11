@@ -20,6 +20,10 @@ const GlobalStyle = createGlobalStyle`
     color: ${({ theme }) => theme.colors.text};
   }
 
+  body, input, button, textarea, select {
+    font-family: 'silkscreen', sans-serif;
+  }
+
   a {
     text-decoration: none;
     color: inherit;
