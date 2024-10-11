@@ -84,11 +84,14 @@ export const Chat = ({ messages, currentUser, onSendMessage, disabled }) => {
 const S = {
   ChattingWrapper: styled.div`
     ${flexColumn};
-    width: 50%;
     height: 100vh;
     background: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.text};
     padding: ${({ theme }) => theme.spacing.large};
+
+    @media (min-width: ${({ theme }) => theme.breakpoints.mobile}) {
+      width: 50%;
+    }
   `,
   ChatContainer: styled.div`
     ${flexColumn};
