@@ -70,22 +70,23 @@ export const useClickRequest = () => {
   });
 };
 
-export const useEnterChatRoom = ({ senderId, onSuccess, onError }) =>
+export const useEnterChatRoom = ({ senderId, onSuccess, onError, enabled }) =>
   useQuery({
     queryKey: queryKeys.chat.enter(senderId).queryKey,
     queryFn: queryKeys.chat.enter(senderId).queryFn,
     onSuccess,
     onError,
+    enabled,
   });
 
-// export const useLeaveChatRoom = ({ senderId, onSuccess, onError }) =>
-//   useQuery({
-//     queryKey: queryKeys.chat.leave.queryKey,
-//     queryFn: queryKeys.chat.leave.queryFn({ senderId }),
-//     enabled: false,
-//     onSuccess,
-//     onError,
-//   });
+export const useLeaveChatRoom = ({ senderId, onSuccess, onError, enabled }) =>
+  useQuery({
+    queryKey: queryKeys.chat.leave(senderId).queryKey,
+    queryFn: queryKeys.chat.leave(senderId).queryFn,
+    onSuccess,
+    onError,
+    enabled,
+  });
 
 export const useGetChatMessages = ({ senderId, onSuccess, onError, select }) =>
   useQuery({

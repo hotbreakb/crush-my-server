@@ -3,8 +3,7 @@ import axiosInstance from './instance';
 export const CHAT_ROOM_ID = '1';
 
 export const checkAuth = () => {
-  const token = localStorage.getItem('accessToken');
-  return !!token;
+  return !!localStorage.getItem('accessToken') && !!localStorage.getItem('userNickname');
 };
 
 const signUp = async (data) => {
@@ -94,10 +93,10 @@ export const queryKeys = {
       queryKey: ['chatEnter', senderId],
       queryFn: () => enterChatRoom({ senderId }),
     }),
-    leave: {
-      queryKey: ['chatLeave'],
-      queryFn: leaveChatRoom,
-    },
+    leave: (senderId) => ({
+      queryKey: ['chatLeave', senderId],
+      queryFn: () => leaveChatRoom({ senderId }),
+    }),
     messages: (senderId) => ({
       queryKey: ['chatMessages', senderId],
       queryFn: () => getChatMessages({ senderId }),

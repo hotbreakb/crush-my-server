@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Outlet,
-  Link,
   createRouter,
   createRoute,
   createRootRoute,
@@ -12,20 +11,7 @@ import LoginPage from '../pages/Login.page';
 import { checkAuth } from '../api/factory';
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <div>
-        <Link to="/login" className="[&.active]:font-bold">
-          Login
-        </Link>{' '}
-        <Link to="/" className="[&.active]:font-bold">
-          Home
-        </Link>
-      </div>
-      <hr />
-      <Outlet />
-    </>
-  ),
+  component: () => <Outlet />,
 });
 
 const indexRoute = createRoute({

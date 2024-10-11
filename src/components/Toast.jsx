@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Toast = ({ message, onClose }) => {
+export const Toast = ({ message, onClose }) => {
   return (
     <ToastWrapper>
       <ToastContent>
@@ -46,5 +46,3 @@ const CloseButton = styled.button`
   padding: 0;
   line-height: 1;
 `;
-
-export default Toast;

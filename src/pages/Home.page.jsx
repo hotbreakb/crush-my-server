@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
-import { useEnterChatRoom, useGetChatMessages, useGetClickResult, useClickRequest } from '../hooks';
+
 import { useAuth } from '../contexts';
 import SocketService from '../service/socket.service';
+import { CHAT_ROOM_ID } from '../api/factory';
+
 import { Chat } from '../components/Chat';
-import Toast from '../components/Toast';
-import { CHAT_ROOM_ID, queryKeys } from '../api/factory';
-import { useQueryClient } from '@tanstack/react-query';
+import { Toast } from '../components/Toast';
+import {
+  useEnterChatRoom,
+  useLeaveChatRoom,
+  useGetChatMessages,
+  useGetClickResult,
+  useClickRequest,
+} from '../hooks';
 
 const NUM_OF_TOP_RANKING = 5;
 const RANK_COLORS = ['#FF0000', '#FFA800', '#FFF500', '#0EB500', '#1B32FF'];
@@ -25,19 +32,27 @@ const RankingItem = React.memo(({ info, index }) => (
 ));
 
 const HomePage = () => {
-  const queryClient = useQueryClient();
-
   const { user } = useAuth();
   const [socketService, setSocketService] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const shouldLeaveChat = useRef(false);
 
-  useEnterChatRoom({
+  const { refetch: enterChatroom } = useEnterChatRoom({
     senderId: user.id,
     onError: () => {
       handleError('채팅방에 입장할 수 없습니다');
     },
+    enabled: false,
+  });
+
+  const { refetch: leaveChatRoom } = useLeaveChatRoom({
+    senderId: user.id,
+    onError: () => {
+      handleError('채팅방에서 나갈 수 없습니다');
+    },
+    enabled: false,
   });
 
   const { refetch: getChatMessages } = useGetChatMessages({
@@ -93,10 +108,13 @@ const HomePage = () => {
   };
 
   useEffect(() => {
+    if (!user.nickname) return;
+
     const newSocketService = new SocketService({
       onConnect: () => {
         setIsConnected(true);
         handleError('');
+        enterChatroom();
         getChatMessages();
       },
       onConnectionError: () => {
@@ -118,11 +136,27 @@ const HomePage = () => {
       },
     });
 
-    if (!user.nickname) throw new Error('user nickname is undefined');
     newSocketService.connect(user.nickname);
     setSocketService(newSocketService);
 
+    const handleBeforeUnload = (event) => {
+      shouldLeaveChat.current = true;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    const handleUnload = () => {
+      if (shouldLeaveChat.current) {
+        leaveChatRoom();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('unload', handleUnload); // FIXME: deprecated event
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
       newSocketService.disconnect();
     };
   }, [user.nickname]);
