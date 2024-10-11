@@ -11,6 +11,11 @@ const signUp = async (data) => {
   return response.data;
 };
 
+const signOut = async () => {
+  const response = await axiosInstance.post('/auth/sign-out');
+  return response.data;
+};
+
 export const reissueToken = async () => {
   const refreshToken = localStorage.getItem('refreshToken');
 
@@ -74,6 +79,9 @@ export const queryKeys = {
   auth: {
     signUp: {
       mutationFn: signUp,
+    },
+    signOut: {
+      mutationFn: signOut,
     },
     reissueToken: {
       mutationFn: reissueToken,

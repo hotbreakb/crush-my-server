@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
+import { flexColumn, flexCenter } from '../styles/flexStyle';
+import submit from '../../src/assets/images/submit.png';
+
 const groupMessages = (messages) => {
   return messages.reduce((groups, message, index) => {
     if (index === 0 || !message.nickname || message.nickname !== messages[index - 1].nickname) {
@@ -70,9 +73,9 @@ export const Chat = ({ messages, currentUser, onSendMessage, disabled }) => {
           onKeyPress={handleKeyPress}
           disabled={disabled}
         />
-        <S.Button onClick={handleSend} disabled={disabled}>
-          전송
-        </S.Button>
+        <S.Submit onClick={handleSend} disabled={disabled} alt="메시지 전송하기">
+          <S.SendImage src={submit} alt="전송하기 이미지" />
+        </S.Submit>
       </S.UserInput>
     </S.ChattingWrapper>
   );
@@ -80,8 +83,7 @@ export const Chat = ({ messages, currentUser, onSendMessage, disabled }) => {
 
 const S = {
   ChattingWrapper: styled.div`
-    display: flex;
-    flex-direction: column;
+    ${flexColumn};
     width: 50%;
     height: 100vh;
     background: ${({ theme }) => theme.colors.primary};
@@ -89,9 +91,8 @@ const S = {
     padding: ${({ theme }) => theme.spacing.large};
   `,
   ChatContainer: styled.div`
-    display: flex;
+    ${flexColumn};
     flex: 1;
-    flex-direction: column;
     height: 100%;
     overflow-y: auto;
     margin-bottom: ${({ theme }) => theme.spacing.medium};
@@ -99,18 +100,15 @@ const S = {
     padding-right: ${({ theme }) => theme.spacing.small};
   `,
   MessageGroup: styled.div`
-    display: flex;
-    flex-direction: column;
+    ${flexColumn};
     gap: 0.3125rem;
   `,
   SystemMessage: styled.div`
-    display: flex;
-    flex-direction: column;
+    ${flexColumn};
     align-items: center;
   `,
   UserMessage: styled.div`
-    display: flex;
-    flex-direction: column;
+    ${flexColumn};
     align-items: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
   `,
   NicknameLabel: styled.span`
@@ -126,6 +124,7 @@ const S = {
     word-wrap: break-word;
   `,
   UserInput: styled.div`
+    max-height: 50px;
     display: flex;
     gap: ${({ theme }) => theme.spacing.small};
     padding-top: ${({ theme }) => theme.spacing.medium};
@@ -146,21 +145,23 @@ const S = {
     font-size: ${({ theme }) => theme.fontSizes.small};
     color: ${({ theme }) => theme.colors.text};
   `,
-  Button: styled.button`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.text};
-    border: none;
-    padding: ${({ theme }) => theme.spacing.small} ${({ theme }) => theme.spacing.medium};
-    border-radius: 6px;
-    font-size: ${({ theme }) => theme.fontSizes.medium};
-    cursor: pointer;
-    transition: background-color 0.3s;
+  Submit: styled.button`
+    ${flexCenter};
+    height: 100%;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    background-color: #d9d9d9;
 
-    &:hover {
-      background-color: ${({ theme }) => theme.colors.secondary};
+    :hover {
+      background-color: #cdcdcd;
     }
+
+    :disabled {
+      user-select: none;
+    }
+  `,
+  SendImage: styled.img`
+    max-height: 25px;
+    object-fit: contain;
   `,
 };

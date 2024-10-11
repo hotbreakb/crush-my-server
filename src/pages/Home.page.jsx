@@ -9,12 +9,19 @@ import { CHAT_ROOM_ID } from '../api/factory';
 import { Chat } from '../components/Chat';
 import { Toast } from '../components/Toast';
 import {
+  useSignOut,
   useEnterChatRoom,
   useLeaveChatRoom,
   useGetChatMessages,
   useGetClickResult,
   useClickRequest,
 } from '../hooks';
+import { flexColumn, flexCenter } from '../styles/flexStyle';
+
+import requestButton from '../../src/assets/images/request-button.png';
+import requestButtonActivated from '../../src/assets/images/request-button-activated.png';
+import cpuChip from '../../src/assets/images/cpu-chip.png';
+import cpuChipActivated from '../../src/assets/images/cpu-chip-activated.png';
 
 const NUM_OF_TOP_RANKING = 5;
 const RANK_COLORS = ['#FF0000', '#FFA800', '#FFF500', '#0EB500', '#1B32FF'];
@@ -40,6 +47,17 @@ const HomePage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
+  const signOutMutation = useSignOut({
+    onSuccess: () => {
+      signOut();
+      leaveChatRoom();
+      router.navigate('/login');
+    },
+    onError: () => {
+      handleError('로그아웃을 실패하였습니다');
+    },
+  });
+
   const { refetch: leaveChatRoom } = useLeaveChatRoom({
     senderId: user.id,
     onError: () => {
@@ -63,7 +81,7 @@ const HomePage = () => {
       setMessages(data);
     },
     onError: () => {
-      handleError('대화 내역을 불러올 수 없습니다.');
+      handleError('대화 내역을 불러올 수 없습니다');
     },
     enabled: Boolean(user.id),
   });
@@ -86,7 +104,7 @@ const HomePage = () => {
     },
   });
 
-  const { mutate: clickRequest } = useClickRequest();
+  const { mutate: clickRequest, isPending } = useClickRequest();
 
   const handleRequestClick = () => {
     if (isConnected) clickRequest({ memberId: user.id });
@@ -145,34 +163,35 @@ const HomePage = () => {
   }, [user]);
 
   const handleSignOut = () => {
-    signOut();
-    leaveChatRoom();
-    router.navigate('/login');
+    signOutMutation.mutate();
   };
 
   return (
     <S.Wrapper>
       <S.Content>
-        <S.CountWrapper>
-          <S.Title>Crush My Server</S.Title>
-          {errorMessage && <Toast message={errorMessage} onClose={handleCloseToast} />}
-
-          <S.ButtonWrapper>
-            <S.Action>
-              <S.Button onClick={handleRequestClick} disabled={!isConnected}>
-                request
-              </S.Button>
-              <S.Count>my count : {data?.count ?? 0}</S.Count>
-            </S.Action>
-            <S.Image src="/path-to-your-image.jpg" alt="Descriptive text" />
-          </S.ButtonWrapper>
-          <S.Ranking>
-            {(data?.clickRank ?? []).map((info, index) => (
-              <RankingItem key={`${info.nickname}-${index}`} info={info} index={index} />
-            ))}
-          </S.Ranking>
-          <button onClick={handleSignOut}>Sign Out</button>
-        </S.CountWrapper>
+        <S.SignOutWrapper>
+          <S.CountWrapper>
+            <S.Title>Crush My Server</S.Title>
+            {errorMessage && <Toast message={errorMessage} onClose={handleCloseToast} />}
+            <S.ButtonWrapper>
+              <S.Action>
+                <S.CountButton
+                  disabled={isPending || !isConnected}
+                  isPending={isPending}
+                  onClick={handleRequestClick}
+                />
+                <S.Count>my count : {data?.count ?? 0}</S.Count>
+              </S.Action>
+              <S.CPUImage src={isPending ? cpuChipActivated : cpuChip} alt="CPU Chip" />
+            </S.ButtonWrapper>
+            <S.Ranking>
+              {(data?.clickRank ?? []).map((info, index) => (
+                <RankingItem key={`${info.nickname}-${index}`} info={info} index={index} />
+              ))}
+            </S.Ranking>
+          </S.CountWrapper>
+          <S.SignOutButton onClick={handleSignOut}>Sign Out</S.SignOutButton>
+        </S.SignOutWrapper>
         <Chat
           messages={messages}
           currentUser={user}
@@ -186,17 +205,6 @@ const HomePage = () => {
 
 export default HomePage;
 
-const flexColumn = css`
-  display: flex;
-  flex-direction: column;
-`;
-
-const flexCenter = css`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
 export const S = {
   Wrapper: styled.div`
     ${flexColumn}
@@ -207,10 +215,14 @@ export const S = {
     flex: 1;
     display: flex;
   `,
-  CountWrapper: styled.div`
-    ${flexColumn}
+  SignOutWrapper: styled.div`
+    ${flexColumn};
+    justify-content: space-between;
     width: 50%;
     padding: ${({ theme }) => theme.spacing.large};
+  `,
+  CountWrapper: styled.div`
+    ${flexColumn}
   `,
   ButtonWrapper: styled.div`
     display: flex;
@@ -259,19 +271,33 @@ export const S = {
     margin-bottom: ${({ theme }) => theme.spacing.large};
     color: ${({ theme }) => theme.colors.text};
   `,
-  Button: styled.button`
-    ${flexCenter}
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.text};
-    border: none;
-    padding: ${({ theme }) => theme.spacing.small} ${({ theme }) => theme.spacing.medium};
-    border-radius: 6px;
-    font-size: ${({ theme }) => theme.fontSizes.medium};
-    cursor: pointer;
-    transition: background-color 0.3s;
+  CountButton: styled.button`
+    ${flexCenter};
+    width: 73%;
+    aspect-ratio: 140 / 64;
+    background-color: transparent;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 
-    &:hover {
-      background-color: ${({ theme }) => theme.colors.secondary};
+    :disabled {
+      user-select: none;
     }
+
+    ${(props) => css`
+      background-image: url(${props.isPending ? requestButtonActivated : requestButton});
+    `}
+  `,
+  CPUImage: styled.img`
+    width: 24%;
+    object-fit: contain;
+  `,
+  SignOutButton: styled.button`
+    max-width: 500px;
+    width: 30%;
+    height: 2rem;
+    aspect-ratio: 1;
+    background-color: ${({ theme }) => theme.colors.header};
+    border-radius: 6px;
   `,
 };

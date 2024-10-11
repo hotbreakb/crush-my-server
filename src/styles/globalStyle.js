@@ -31,6 +31,11 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
   }
 
+  button {
+    border: none;
+    cursor: pointer;
+  }
+
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
     html {
       font-size: 14px;

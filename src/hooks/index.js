@@ -47,6 +47,13 @@ export const useSignUp = ({ onSuccess, onError }) =>
     onError,
   });
 
+export const useSignOut = ({ onSuccess, onError }) =>
+  useMutation({
+    mutationFn: queryKeys.auth.signOut.mutationFn,
+    onSuccess,
+    onError,
+  });
+
 export const useReissueToken = () => useMutation(queryKeys.auth.reissueToken.mutationFn);
 
 export const useGetClickResult = ({ memberId, select, onSuccess, onError }) =>
