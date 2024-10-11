@@ -98,7 +98,7 @@ export const S = {
     }
 
     ${(props) => css`
-      background-image: url(${props.isPending ? requestButtonActivated : requestButton});
+      background-image: url(${props.$isPending ? requestButtonActivated : requestButton});
     `}
   `,
   CPUImageWrapper: styled.div`
@@ -115,7 +115,7 @@ export const S = {
     background-position: center;
     background-repeat: no-repeat;
     ${(props) => css`
-      background-image: url(${props.isMuted ? audioMute : audio});
+      background-image: url(${props.$isMuted ? audioMute : audio});
     `}
   `,
   CPUImage: styled.img`
@@ -147,5 +147,10 @@ export const S = {
       transform: translateY(1px);
       box-shadow: 0 2px 4px ${({ theme }) => theme.colors.shadow}66;
     }
+  `,
+  ErrorMessage: styled.span`
+    font-weight: bold;
+    font-size: ${({ theme }) => theme.fontSizes.medium};
+    color: ${({ theme }) => theme.colors.error};
   `,
 };

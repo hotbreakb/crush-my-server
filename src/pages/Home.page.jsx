@@ -39,12 +39,13 @@ const RankingItem = React.memo(({ info, index }) => (
 const HomePage = () => {
   const router = useRouter();
   const { user, signOut } = useAuth();
+
   const [socketService, setSocketService] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const audioRef = useRef(new Audio('../../src/assets/audio/computer-fan.mp3'));
+
+  const isConnected = socketService?.getIsConnected() ?? false;
+  const errorMessage = socketService?.getErrorMessage() ?? '';
 
   const signOutMutation = useSignOut({
     onSuccess: () => {
@@ -52,36 +53,21 @@ const HomePage = () => {
       leaveChatRoom();
       router.navigate('/login');
     },
-    onError: () => {
-      handleError('로그아웃을 실패하였습니다');
-    },
   });
 
   const { refetch: leaveChatRoom } = useLeaveChatRoom({
     senderId: user.id,
-    onError: () => {
-      handleError('채팅방에서 나갈 수 없습니다');
-    },
     enabled: false,
   });
 
   useEnterChatRoom({
     senderId: user.id,
-    onError: () => {
-      handleError('채팅방에 입장할 수 없습니다');
-    },
     enabled: Boolean(user.id),
   });
 
-  useGetChatMessages({
+  const { messages, addMessage } = useGetChatMessages({
     senderId: user.id,
     select: (data) => data.groupChatMessageResponses,
-    onSuccess: (data) => {
-      setMessages(data);
-    },
-    onError: () => {
-      handleError('대화 내역을 불러올 수 없습니다');
-    },
     enabled: Boolean(user.id),
   });
 
@@ -114,19 +100,17 @@ const HomePage = () => {
     }
   };
 
-  const handleError = (message) => {
-    setErrorMessage(message);
-  };
-
   const handleCloseToast = () => {
-    setErrorMessage('');
+    socketService.setErrorMessage('');
   };
 
   const toggleMute = () => {
-    setIsMuted((prev) => !prev);
-    audioRef.current.muted = !isMuted;
-
-    if (!isMuted) audioRef.current.play();
+    setIsMuted((prev) => {
+      const result = !prev;
+      if (!result) audioRef.current.play();
+      else audioRef.current.pause();
+      return result;
+    });
   };
 
   const handleRequestClick = () => {
@@ -138,30 +122,23 @@ const HomePage = () => {
 
     const newSocketService = new SocketService({
       onConnect: () => {
-        setIsConnected(true);
-        handleError('');
-      },
-      onConnectionError: () => {
-        setIsConnected(false);
-        handleError('연결에 실패했습니다. 일부 기능을 사용할 수 없습니다.');
-      },
-      onChatError: () => {
-        handleError('채팅 기능을 사용할 수 없습니다.');
-      },
-      onClickError: () => {
-        handleError('클릭 기능을 사용할 수 없습니다.');
+        setSocketService((prev) => {
+          if (prev) {
+            prev.disconnect();
+          }
+          return newSocketService;
+        });
       },
       onMessage: (topic, message) => {
         const parsedMessage = JSON.parse(message);
 
         if (!topic.includes('/sub/click')) {
-          setMessages((prev) => [...prev, parsedMessage]);
+          addMessage(parsedMessage);
         }
       },
     });
 
     newSocketService.connect(user.nickname);
-    setSocketService(newSocketService);
 
     return () => {
       newSocketService.disconnect();
@@ -183,13 +160,13 @@ const HomePage = () => {
               <S.Action>
                 <S.CountButton
                   disabled={isPending || !isConnected}
-                  isPending={isPending}
+                  $isPending={isPending}
                   onClick={handleRequestClick}
                 />
                 <S.Count>my count : {data?.count ?? 0}</S.Count>
               </S.Action>
               <S.CPUImageWrapper>
-                <S.AudioButton isMuted={isMuted} alt="audio" onClick={toggleMute} />
+                <S.AudioButton $isMuted={isMuted} alt="audio" onClick={toggleMute} />
                 <S.CPUImage src={isPending ? cpuChipActivated : cpuChip} alt="CPU Chip" />
               </S.CPUImageWrapper>
             </S.ButtonWrapper>
@@ -200,12 +177,15 @@ const HomePage = () => {
             </S.Ranking>
           </S.CountWrapper>
           <S.SignOutButton onClick={handleSignOut}>Sign Out</S.SignOutButton>
+          {signOutMutation.error && (
+            <S.ErrorMessage>{signOutMutation.error.message}</S.ErrorMessage>
+          )}
         </S.SignOutWrapper>
         <Chat
           messages={messages}
           currentUser={user}
           onSendMessage={handleSendMessage}
-          disabled={!isConnected}
+          disabled={!socketService?.getIsConnected()}
         />
       </S.Content>
     </S.Wrapper>

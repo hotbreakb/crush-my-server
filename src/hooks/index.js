@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { QueryClient, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/factory';
 
@@ -97,8 +98,10 @@ export const useLeaveChatRoom = ({ senderId, onSuccess, onError, enabled }) =>
     enabled,
   });
 
-export const useGetChatMessages = ({ senderId, select, onSuccess, onError, enabled }) =>
-  useQuery({
+export const useGetChatMessages = ({ senderId, select, onSuccess, onError, enabled }) => {
+  const [messages, setMessages] = useState([]);
+
+  const { data, error, refetch } = useQuery({
     queryKey: queryKeys.chat.messages(senderId).queryKey,
     queryFn: queryKeys.chat.messages(senderId).queryFn,
     select,
@@ -106,5 +109,21 @@ export const useGetChatMessages = ({ senderId, select, onSuccess, onError, enabl
     onError,
     enabled,
   });
+
+  useEffect(() => {
+    if (!!data) setMessages(data);
+  }, [data]);
+
+  const addMessage = (newMessage) => {
+    setMessages((prev) => [...prev, newMessage]);
+  };
+
+  return {
+    messages,
+    addMessage,
+    refetch,
+    error,
+  };
+};
 
 export const useReceiveStompMessage = () => useMutation(queryKeys.chat.stomp.mutationFn);

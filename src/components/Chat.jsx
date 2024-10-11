@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import { flexColumn, flexCenter } from '../styles/flexStyle';
 import submit from '../../src/assets/images/submit.png';
@@ -44,19 +44,23 @@ export const Chat = ({ messages, currentUser, onSendMessage, disabled }) => {
     <S.ChattingWrapper>
       <S.ChatContainer>
         {groupedMessages.map((group, groupIndex) => (
-          <S.MessageGroup key={groupIndex}>
+          <S.MessageGroup key={`${group[0].nickname}-${group[0].content}-${groupIndex}`}>
             {group.map((message, index) => {
               if (!message.nickname)
-                return <S.SystemMessage key={message.uuid}>{message.content}</S.SystemMessage>;
+                return (
+                  <S.SystemMessage key={`${message.nickname}-${message.content}-${message.index}`}>
+                    {message.content}
+                  </S.SystemMessage>
+                );
 
               const isCurrentUser = message.nickname === currentUser.nickname;
 
               return (
-                <S.UserMessage key={message.uuid} isCurrentUser={isCurrentUser}>
+                <S.UserMessage key={message.uuid} $isCurrentUser={isCurrentUser}>
                   {index === 0 && !isCurrentUser && (
                     <S.NicknameLabel>{message.nickname}</S.NicknameLabel>
                   )}
-                  <S.MessageBubble isCurrentUser={isCurrentUser}>{message.content}</S.MessageBubble>
+                  <S.MessageBubble>{message.content}</S.MessageBubble>
                 </S.UserMessage>
               );
             })}
@@ -112,7 +116,9 @@ const S = {
   `,
   UserMessage: styled.div`
     ${flexColumn};
-    align-items: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
+    ${(props) => css`
+      align-items: url(${props.$isCurrentUser ? 'flex-end' : 'flex-start'});
+    `}
   `,
   NicknameLabel: styled.span`
     color: #888;
@@ -123,7 +129,7 @@ const S = {
     background-color: ${({ theme }) => theme.colors.secondary};
     padding: ${({ theme }) => theme.spacing.small};
     border-radius: 10px;
-    max-width: 70%;
+    max-width: fit-content;
     word-wrap: break-word;
   `,
   UserInput: styled.div`
