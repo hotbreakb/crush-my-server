@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from '@tanstack/react-router';
 import styled, { css } from 'styled-components';
 
 import { useAuth } from '../contexts';
@@ -32,20 +33,12 @@ const RankingItem = React.memo(({ info, index }) => (
 ));
 
 const HomePage = () => {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const [socketService, setSocketService] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const shouldLeaveChat = useRef(false);
-
-  const { refetch: enterChatroom } = useEnterChatRoom({
-    senderId: user.id,
-    onError: () => {
-      handleError('채팅방에 입장할 수 없습니다');
-    },
-    enabled: false,
-  });
 
   const { refetch: leaveChatRoom } = useLeaveChatRoom({
     senderId: user.id,
@@ -55,7 +48,15 @@ const HomePage = () => {
     enabled: false,
   });
 
-  const { refetch: getChatMessages } = useGetChatMessages({
+  useEnterChatRoom({
+    senderId: user.id,
+    onError: () => {
+      handleError('채팅방에 입장할 수 없습니다');
+    },
+    enabled: Boolean(user.id),
+  });
+
+  useGetChatMessages({
     senderId: user.id,
     select: (data) => data.groupChatMessageResponses,
     onSuccess: (data) => {
@@ -64,12 +65,13 @@ const HomePage = () => {
     onError: () => {
       handleError('대화 내역을 불러올 수 없습니다.');
     },
+    enabled: Boolean(user.id),
   });
 
   const { data } = useGetClickResult({
     select: (data) => {
       const sorted = Object.entries(data.clickRank)
-        .sort((a, b) => a - b)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
         .reduce((res, value) => {
           res.push({ nickname: value[0], count: value[1] });
           return res;
@@ -108,14 +110,12 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    if (!user.nickname) return;
+    if (!user.nickname || !user.id) return;
 
     const newSocketService = new SocketService({
       onConnect: () => {
         setIsConnected(true);
         handleError('');
-        enterChatroom();
-        getChatMessages();
       },
       onConnectionError: () => {
         setIsConnected(false);
@@ -139,27 +139,16 @@ const HomePage = () => {
     newSocketService.connect(user.nickname);
     setSocketService(newSocketService);
 
-    const handleBeforeUnload = (event) => {
-      shouldLeaveChat.current = true;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-
-    const handleUnload = () => {
-      if (shouldLeaveChat.current) {
-        leaveChatRoom();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('unload', handleUnload); // FIXME: deprecated event
-
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('unload', handleUnload);
       newSocketService.disconnect();
     };
-  }, [user.nickname]);
+  }, [user]);
+
+  const handleSignOut = () => {
+    signOut();
+    leaveChatRoom();
+    router.navigate('/login');
+  };
 
   return (
     <S.Wrapper>
@@ -182,6 +171,7 @@ const HomePage = () => {
               <RankingItem key={`${info.nickname}-${index}`} info={info} index={index} />
             ))}
           </S.Ranking>
+          <button onClick={handleSignOut}>Sign Out</button>
         </S.CountWrapper>
         <Chat
           messages={messages}

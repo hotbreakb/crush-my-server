@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useRouter } from '@tanstack/react-router';
-import { useAuth } from '../contexts';
-import { useSignUp } from '../hooks';
 import styled from 'styled-components';
 
+import { useAuth } from '../contexts';
+import { useSignUp } from '../hooks';
+
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { signIn } = useAuth();
   const router = useRouter();
 
   const [nickname, setNickname] = useState('');
@@ -14,7 +15,7 @@ const LoginPage = () => {
 
   const signUpMutation = useSignUp({
     onSuccess: (data) => {
-      login(data, nickname);
+      signIn(data, nickname);
       router.navigate({ to: '/' });
     },
     onError: (error) => {

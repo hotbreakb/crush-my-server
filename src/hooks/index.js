@@ -5,9 +5,11 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
+      refetchOnWindowFocus: false,
     },
     mutations: {
       retry: false,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -88,14 +90,14 @@ export const useLeaveChatRoom = ({ senderId, onSuccess, onError, enabled }) =>
     enabled,
   });
 
-export const useGetChatMessages = ({ senderId, onSuccess, onError, select }) =>
+export const useGetChatMessages = ({ senderId, select, onSuccess, onError, enabled }) =>
   useQuery({
     queryKey: queryKeys.chat.messages(senderId).queryKey,
     queryFn: queryKeys.chat.messages(senderId).queryFn,
-    enabled: false,
+    select,
     onSuccess,
     onError,
-    select,
+    enabled,
   });
 
 export const useReceiveStompMessage = () => useMutation(queryKeys.chat.stomp.mutationFn);

@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (tokens, nickname) => {
+  const signIn = (tokens, nickname) => {
     localStorage.setItem('accessToken', tokens.accessToken);
     localStorage.setItem('refreshToken', tokens.refreshToken);
     localStorage.setItem('userNickname', nickname);
@@ -29,14 +29,14 @@ export const AuthProvider = ({ children }) => {
     setUser({ id, nickname });
   };
 
-  const logout = () => {
+  const signOut = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userNickname');
     setUser({ id: null, nickname: null });
   };
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, signIn, signOut }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
