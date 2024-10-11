@@ -98,7 +98,7 @@ export const S = {
     }
 
     ${(props) => css`
-      background-image: url(${props.$isPending ? requestButtonActivated : requestButton});
+      background-image: ${props.$isPending ? requestButtonActivated : requestButton};
     `}
   `,
   CPUImageWrapper: styled.div`

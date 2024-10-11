@@ -117,7 +117,7 @@ const S = {
   UserMessage: styled.div`
     ${flexColumn};
     ${(props) => css`
-      align-items: url(${props.$isCurrentUser ? 'flex-end' : 'flex-start'});
+      align-items: ${props.$isCurrentUser ? 'flex-end' : 'flex-start'};
     `}
   `,
   NicknameLabel: styled.span`
