@@ -15,32 +15,6 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const authRequest = async (request) => {
-  try {
-    const response = await request(axiosInstance);
-    return response.data;
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      try {
-        const newTokens = await queryKeys.auth.reissueToken.mutationFn();
-
-        localStorage.setItem('accessToken', newTokens.accessToken);
-        localStorage.setItem('refreshToken', newTokens.refreshToken);
-
-        const retryResponse = await request(axiosInstance);
-        return retryResponse.data;
-      } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-
-        throw new Error('Authentication failed');
-      }
-    }
-
-    throw error;
-  }
-};
-
 export const useSignUp = ({ onSuccess, onError }) =>
   useMutation({
     mutationFn: queryKeys.auth.signUp.mutationFn,
@@ -54,8 +28,6 @@ export const useSignOut = ({ onSuccess, onError }) =>
     onSuccess,
     onError,
   });
-
-export const useReissueToken = () => useMutation(queryKeys.auth.reissueToken.mutationFn);
 
 export const useGetClickResult = ({ memberId, select, onSuccess, onError }) =>
   useQuery({

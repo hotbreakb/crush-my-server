@@ -24,7 +24,7 @@ export const reissueToken = async () => {
   }
 
   const response = await axiosInstance.post('/auth/reissue', {
-    refreshToken: refreshToken,
+    refreshToken,
   });
 
   return response.data;
