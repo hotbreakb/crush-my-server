@@ -1,73 +1,66 @@
 # Crush My Server
 
 <p align="center">
-  <strong>서버에 부하를 걸고 실시간으로 모니터링하세요!</strong>
+ <strong>Stress test and monitor your server in real-time!</strong>
 </p>
 
-<p align="center">
-  <a href="https://crush-my-server.vercel.app">🌐 Live Demo</a> •
-  <a href="#features">✨ Features</a> •
-  <a href="#getting-started">🚀 Getting Started</a> •
-  <a href="#usage">💻 Usage</a> •
-  <a href="#tech-stack">🛠 Tech Stack</a> •
-  <a href="#contributors">👥 Contributors</a>
-</p>
+## 🎯 Introduction
 
-## 🎯 소개
-
-`Crush My Server`는 서버 부하 테스트와 실시간 모니터링을 위한 interactive 플랫폼입니다.
+This is an interactive platform for server stress testing and real-time monitoring. Users can put load on the server and observe the results in real-time.
 
 ## ✨ Features
 
-- 🖱 **Request 버튼**: 클릭 한 번으로 서버에 부하를 줍니다.
-- 💬 **실시간 채팅**: 다른 사용자들과 실시간으로 소통하세요.
-- 🏆 **랭킹 시스템**: 가장 많은 부하를 준 사용자를 확인하세요.
+- 🖱 **Request Button**: Put load on the server with a single click.
+- 💬 **Real-time Chat**: Communicate with other users in real-time.
+- 🏆 **Ranking System**: Check who has put the most load on the server.
 
 ## 🚀 Getting Started
 
-### 필요 조건
+### Prerequisites
 
 - Node.js (v18 이상)
 - Yarn
 
-### 설치 방법
+### Installation
 
-1. 저장소를 클론합니다:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/hotbreakb/crush-my-server.git
    cd crush-my-server
    ```
 
-2. Node.js 버전을 설정합니다:
+2. Set Node.js version:
 
    ```bash
    nvm use 18
    ```
 
-3. 의존성을 설치합니다:
+3. Install dependencies:
 
    ```bash
    yarn install
    ```
 
-4. 의존성을 설치합니다:
+4. Run the development server:
    ```bash
    yarn start
    ```
 
+🎉 Now you can view the application at http://localhost:5173
+
 ## 💻 Usage
 
-1. 메인 페이지에서 'Request' 버튼을 클릭하여 서버에 부하를 줍니다.
-2. 채팅 창을 통해 다른 사용자들과 실시간으로 소통합니다.
-3. 랭킹 보드에서 최고 기록을 확인하세요.
+1. Click the 'Request' button on the main page to put load on the server.
+2. Use the chat window to communicate with other users in real-time.
+3. Check the ranking board to see the top records!
 
 ## 🛠 Tech Stack
 
 - Frontend: React, Vite, Styled-Components
 - Backend: Spring Boot
 - Real-time Communication: WebSocket
-- Deployment: Vercel (Frontend), AWS (Backend)
+- Deployment: Vercel (Frontend), NGINX (Backend)
 
 ## 👥 Contributors
 
@@ -92,8 +85,14 @@
 
 ## 🔗 Related Projects
 
-[Backend Repository](https://github.com/KimChanJin97/crashMyServer-be)
+- [Backend Repository](https://github.com/KimChanJin97/crashMyServer-be)
 
 ## 📄 License
 
-이 프로젝트는 MIT 라이선스하에 있습니다.
+This project is under the MIT License.
+
+---
+
+<p align="center">
+  Made with ❤️ by the Crush My Server Team
+</p>
