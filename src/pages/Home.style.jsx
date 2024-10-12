@@ -87,6 +87,7 @@ export const S = {
   CountButton: styled.button`
     ${flexCenter};
     width: 73%;
+    min-height: 52px;
     aspect-ratio: 140 / 64;
     background-color: transparent;
     background-size: cover;
@@ -98,7 +99,7 @@ export const S = {
     }
 
     ${(props) => css`
-      background-image: ${props.$isPending ? requestButtonActivated : requestButton};
+      background-image: url(${props.$isPending ? requestButtonActivated : requestButton});
     `}
   `,
   CPUImageWrapper: styled.div`
