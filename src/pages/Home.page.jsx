@@ -20,6 +20,7 @@ import { S } from './Home.style';
 import { RANK_COLORS } from './Home.style';
 import cpuChip from '../../src/assets/images/cpu-chip.png';
 import cpuChipActivated from '../../src/assets/images/cpu-chip-activated.png';
+import audio from '../../src/assets/audio/computer-fan.mp3';
 
 const NUM_OF_TOP_RANKING = 5;
 
@@ -42,7 +43,7 @@ const HomePage = () => {
 
   const [socketService, setSocketService] = useState(null);
   const [isMuted, setIsMuted] = useState(true);
-  const audioRef = useRef(new Audio('../../src/assets/audio/computer-fan.mp3'));
+  const audioRef = useRef();
 
   const isConnected = socketService?.getIsConnected() ?? false;
   const errorMessage = socketService?.getErrorMessage() ?? '';
@@ -167,6 +168,7 @@ const HomePage = () => {
               </S.Action>
               <S.CPUImageWrapper>
                 <S.AudioButton $isMuted={isMuted} alt="audio" onClick={toggleMute} />
+                <audio ref={audioRef} src={audio} loop />
                 <S.CPUImage src={isPending ? cpuChipActivated : cpuChip} alt="CPU Chip" />
               </S.CPUImageWrapper>
             </S.ButtonWrapper>
