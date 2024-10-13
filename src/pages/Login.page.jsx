@@ -67,7 +67,9 @@ const LoginPage = () => {
             {signUpMutation.isLoading ? 'submitting...' : 'sign in'}
           </S.SubmitButton>
         </S.LoginForm>
-        {signUpMutation.error && <S.ErrorMessage>{signUpMutation.error.message}</S.ErrorMessage>}
+        {signUpMutation.error && (
+          <S.ErrorMessage>{signUpMutation.error.response.data.message}</S.ErrorMessage>
+        )}
         {connectionError && <S.ErrorMessage>{connectionError}</S.ErrorMessage>}
       </S.Content>
     </S.Wrapper>
